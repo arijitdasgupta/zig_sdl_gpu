@@ -1,11 +1,7 @@
 const std = @import("std");
 const c = @import("c.zig").c;
 
-pub const Device = struct {
-    device: *c.SDL_GPUDevice,
-    window: *c.SDL_Window,
-
-    pub fn init() !Device {
+pub fn initDevice() !struct { device: *c.SDL_GPUDevice, window: *c.SDL_Window } {
         if (!c.SDL_Init(c.SDL_INIT_VIDEO)) {
             std.debug.print("SDL Init failed: {s}\n", .{c.SDL_GetError()});
             return error.SDLInitFailed;
@@ -38,25 +34,20 @@ pub const Device = struct {
             return error.ClaimWindowFailed;
         }
 
-        return Device{
+        return .{
             .device = device,
             .window = window,
         };
-    }
+}
 
-    pub fn deinit(self: Device) void {
-        c.SDL_ReleaseWindowFromGPUDevice(self.device, self.window);
-        c.SDL_DestroyGPUDevice(self.device);
-        c.SDL_DestroyWindow(self.window);
-        c.SDL_Quit();
-    }
-};
+pub fn deinitDevice(device: *c.SDL_GPUDevice, window: *c.SDL_Window) void {
+    c.SDL_ReleaseWindowFromGPUDevice(device, window);
+    c.SDL_DestroyGPUDevice(device);
+    c.SDL_DestroyWindow(window);
+    c.SDL_Quit();
+}
 
-pub const Buffer = struct {
-    buffer: *c.SDL_GPUBuffer,
-    device: *c.SDL_GPUDevice,
-
-    pub fn init(device: *c.SDL_GPUDevice, data: []const u8) !Buffer {
+pub fn createBuffer(device: *c.SDL_GPUDevice, data: []const u8) !*c.SDL_GPUBuffer {
         const vertex_buffer = c.SDL_CreateGPUBuffer(
             device,
             &c.SDL_GPUBufferCreateInfo{
@@ -105,16 +96,8 @@ pub const Buffer = struct {
         _ = c.SDL_SubmitGPUCommandBuffer(upload_cmd);
         _ = c.SDL_WaitForGPUIdle(device);
 
-        return Buffer{
-            .buffer = vertex_buffer,
-            .device = device,
-        };
-    }
-
-    pub fn deinit(self: Buffer) void {
-        c.SDL_ReleaseGPUBuffer(self.device, self.buffer);
-    }
-};
+        return vertex_buffer;
+}
 
 pub const Shader = struct {
     shader: *c.SDL_GPUShader,
