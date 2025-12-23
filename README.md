@@ -1,4 +1,4 @@
-# SDL GPU Triangle in Zig
+# SDL GPU Shader Playground in Zig
 
 A simple GPU rendering pipeline using SDL3's GPU API and Zig.
 

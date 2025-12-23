@@ -2,42 +2,42 @@ const std = @import("std");
 const c = @import("c.zig").c;
 
 pub fn initDevice() !struct { device: *c.SDL_GPUDevice, window: *c.SDL_Window } {
-        if (!c.SDL_Init(c.SDL_INIT_VIDEO)) {
-            std.debug.print("SDL Init failed: {s}\n", .{c.SDL_GetError()});
-            return error.SDLInitFailed;
-        }
+    if (!c.SDL_Init(c.SDL_INIT_VIDEO)) {
+        std.debug.print("SDL Init failed: {s}\n", .{c.SDL_GetError()});
+        return error.SDLInitFailed;
+    }
 
-        const window = c.SDL_CreateWindow(
-            "SDL GPU Triangle",
-            800,
-            600,
-            0,
-        ) orelse {
-            std.debug.print("Window creation failed: {s}\n", .{c.SDL_GetError()});
-            return error.WindowCreationFailed;
-        };
+    const window = c.SDL_CreateWindow(
+        "SDL GPU Pipeline",
+        800,
+        600,
+        0,
+    ) orelse {
+        std.debug.print("Window creation failed: {s}\n", .{c.SDL_GetError()});
+        return error.WindowCreationFailed;
+    };
 
-        const device = c.SDL_CreateGPUDevice(
-            c.SDL_GPU_SHADERFORMAT_SPIRV,
-            true,
-            null,
-        ) orelse {
-            std.debug.print("GPU device creation failed: {s}\n", .{c.SDL_GetError()});
-            return error.GPUDeviceCreationFailed;
-        };
+    const device = c.SDL_CreateGPUDevice(
+        c.SDL_GPU_SHADERFORMAT_SPIRV,
+        true,
+        null,
+    ) orelse {
+        std.debug.print("GPU device creation failed: {s}\n", .{c.SDL_GetError()});
+        return error.GPUDeviceCreationFailed;
+    };
 
-        const driver_name = c.SDL_GetGPUDeviceDriver(device);
-        std.debug.print("GPU Device: {s}\n", .{driver_name});
+    const driver_name = c.SDL_GetGPUDeviceDriver(device);
+    std.debug.print("GPU Device: {s}\n", .{driver_name});
 
-        if (!c.SDL_ClaimWindowForGPUDevice(device, window)) {
-            std.debug.print("Failed to claim window: {s}\n", .{c.SDL_GetError()});
-            return error.ClaimWindowFailed;
-        }
+    if (!c.SDL_ClaimWindowForGPUDevice(device, window)) {
+        std.debug.print("Failed to claim window: {s}\n", .{c.SDL_GetError()});
+        return error.ClaimWindowFailed;
+    }
 
-        return .{
-            .device = device,
-            .window = window,
-        };
+    return .{
+        .device = device,
+        .window = window,
+    };
 }
 
 pub fn deinitDevice(device: *c.SDL_GPUDevice, window: *c.SDL_Window) void {
@@ -48,55 +48,55 @@ pub fn deinitDevice(device: *c.SDL_GPUDevice, window: *c.SDL_Window) void {
 }
 
 pub fn createBuffer(device: *c.SDL_GPUDevice, data: []const u8) !*c.SDL_GPUBuffer {
-        const vertex_buffer = c.SDL_CreateGPUBuffer(
-            device,
-            &c.SDL_GPUBufferCreateInfo{
-                .usage = c.SDL_GPU_BUFFERUSAGE_VERTEX,
-                .size = @intCast(data.len),
-                .props = 0,
-            },
-        ) orelse {
-            std.debug.print("Vertex buffer creation failed: {s}\n", .{c.SDL_GetError()});
-            return error.BufferCreationFailed;
-        };
+    const vertex_buffer = c.SDL_CreateGPUBuffer(
+        device,
+        &c.SDL_GPUBufferCreateInfo{
+            .usage = c.SDL_GPU_BUFFERUSAGE_VERTEX,
+            .size = @intCast(data.len),
+            .props = 0,
+        },
+    ) orelse {
+        std.debug.print("Vertex buffer creation failed: {s}\n", .{c.SDL_GetError()});
+        return error.BufferCreationFailed;
+    };
 
-        const transfer_buffer = c.SDL_CreateGPUTransferBuffer(
-            device,
-            &c.SDL_GPUTransferBufferCreateInfo{
-                .usage = c.SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-                .size = @intCast(data.len),
-                .props = 0,
-            },
-        ) orelse {
-            std.debug.print("Transfer buffer creation failed: {s}\n", .{c.SDL_GetError()});
-            return error.TransferBufferCreationFailed;
-        };
-        defer c.SDL_ReleaseGPUTransferBuffer(device, transfer_buffer);
+    const transfer_buffer = c.SDL_CreateGPUTransferBuffer(
+        device,
+        &c.SDL_GPUTransferBufferCreateInfo{
+            .usage = c.SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+            .size = @intCast(data.len),
+            .props = 0,
+        },
+    ) orelse {
+        std.debug.print("Transfer buffer creation failed: {s}\n", .{c.SDL_GetError()});
+        return error.TransferBufferCreationFailed;
+    };
+    defer c.SDL_ReleaseGPUTransferBuffer(device, transfer_buffer);
 
-        const transfer_data = c.SDL_MapGPUTransferBuffer(device, transfer_buffer, false);
-        @memcpy(@as([*]u8, @ptrCast(transfer_data))[0..data.len], data);
-        c.SDL_UnmapGPUTransferBuffer(device, transfer_buffer);
+    const transfer_data = c.SDL_MapGPUTransferBuffer(device, transfer_buffer, false);
+    @memcpy(@as([*]u8, @ptrCast(transfer_data))[0..data.len], data);
+    c.SDL_UnmapGPUTransferBuffer(device, transfer_buffer);
 
-        const upload_cmd = c.SDL_AcquireGPUCommandBuffer(device);
-        const copy_pass = c.SDL_BeginGPUCopyPass(upload_cmd);
-        c.SDL_UploadToGPUBuffer(
-            copy_pass,
-            &c.SDL_GPUTransferBufferLocation{
-                .transfer_buffer = transfer_buffer,
-                .offset = 0,
-            },
-            &c.SDL_GPUBufferRegion{
-                .buffer = vertex_buffer,
-                .offset = 0,
-                .size = @intCast(data.len),
-            },
-            false,
-        );
-        c.SDL_EndGPUCopyPass(copy_pass);
-        _ = c.SDL_SubmitGPUCommandBuffer(upload_cmd);
-        _ = c.SDL_WaitForGPUIdle(device);
+    const upload_cmd = c.SDL_AcquireGPUCommandBuffer(device);
+    const copy_pass = c.SDL_BeginGPUCopyPass(upload_cmd);
+    c.SDL_UploadToGPUBuffer(
+        copy_pass,
+        &c.SDL_GPUTransferBufferLocation{
+            .transfer_buffer = transfer_buffer,
+            .offset = 0,
+        },
+        &c.SDL_GPUBufferRegion{
+            .buffer = vertex_buffer,
+            .offset = 0,
+            .size = @intCast(data.len),
+        },
+        false,
+    );
+    c.SDL_EndGPUCopyPass(copy_pass);
+    _ = c.SDL_SubmitGPUCommandBuffer(upload_cmd);
+    _ = c.SDL_WaitForGPUIdle(device);
 
-        return vertex_buffer;
+    return vertex_buffer;
 }
 
 pub const Shader = struct {
