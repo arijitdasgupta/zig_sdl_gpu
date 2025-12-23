@@ -1,6 +1,6 @@
 # SDL GPU Shader Playground in Zig
 
-A simple GPU rendering pipeline using SDL3's GPU API and Zig.
+A simple GPU rendering pipeline using SDL3's GPU API and Zig. Fork it and play with shaderz.
 
 ## Features
 
@@ -12,9 +12,9 @@ A simple GPU rendering pipeline using SDL3's GPU API and Zig.
 
 ## Prerequisites
 
-- Zig 0.13.0 or later
+- Zig 0.15.2 or later
 - SDL3 (with GPU support)
-- `glslc` (for shader compilation, optional if using pre-compiled shaders)
+- `glslc` (for shader compilation - part of Vulkan SDK)
 
 ## Project Structure
 
