@@ -1,9 +1,10 @@
 # SDL GPU Triangle in Zig
 
-A simple GPU rendering pipeline using SDL3's GPU API and Zig, demonstrating modern cross-platform GPU programming.
+A simple GPU rendering pipeline using SDL3's GPU API and Zig.
 
 ## Features
 
+- Almost entirely vibe coded.
 - Cross-platform GPU rendering (Vulkan, D3D12, Metal via SDL3 GPU)
 - SPIR-V shader pipeline
 - Clean modular architecture
@@ -47,6 +48,7 @@ zig build run
 ## Shaders
 
 The GLSL source shaders are in `shaders/`:
+
 - `triangle.vert.glsl` - Vertex shader (transforms vertices and passes color to fragment shader)
 - `triangle.frag.glsl` - Fragment shader (outputs interpolated color per pixel)
 
@@ -64,6 +66,7 @@ glslc -fshader-stage=fragment shaders/triangle.frag.glsl -o shaders/triangle.fra
 ## What it does
 
 This project demonstrates:
+
 - Creating an SDL3 window and GPU device
 - Loading and compiling SPIR-V shaders
 - Creating GPU buffers and uploading vertex data
